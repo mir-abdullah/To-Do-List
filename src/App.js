@@ -1,82 +1,73 @@
 import "./App.css";
 import { useState } from "react";
 import { Task } from "./Task";
+import { useDispatch, useSelector } from 'react-redux';
+import { addTask, updateTask, deleteTask, completeTask } from './redux/list-slice';
 
 function App() {
-  const [toDoList, setToDoList] = useState([]);
   const [newTask, setNewTask] = useState("");
-  const [editTaskId, setEditTaskId] = useState("");
+  const [editTaskId, setEditTaskId] = useState(null);
+  const dispatch = useDispatch();
+  const taskList = useSelector(state => state.list.taskList);
 
   const handleInputChange = (e) => {
     setNewTask(e.target.value);
   };
 
-  const addTask = () => {
-    if(editTaskId !== null){
-      setToDoList(toDoList.map((task)=>{
-        if(task.id === editTaskId){
-          return {...task, taskName: newTask}
-          }
-          return task
-      }))
-      setEditTaskId(null)
-      setNewTask("")
-      
-    }else{
-    const task = {
-      id: toDoList.length === 0 ? 1 : toDoList[toDoList.length - 1].id + 1,
-      taskName: newTask,
-      completed: false,
-    };
-    setToDoList([...toDoList, task]);
-    setNewTask(""); 
-  }
-};
-
-  const completeTask = (id) => {
-    setToDoList(
-      toDoList.map((task) => {
-        if (task.id === id) {
-          return { ...task, completed: true };
-        } else {
-          return task;
-        }
-      })
-    );
+  const handleAddTask = () => {
+    if (editTaskId !== null) {
+      dispatch(updateTask({ id: editTaskId, name: newTask }));
+      setEditTaskId(null);
+      setNewTask('');
+    } else {
+      const newTaskObject = {
+        id: taskList.length + 1,
+        name: newTask,
+        completed: false
+      };
+      dispatch(addTask(newTaskObject));
+      setNewTask('');
+    }
   };
 
-
-
-  const deleteTask = (id) => {
-    setToDoList(toDoList.filter((task) => task.id !== id));
+  const handleCompleteTask = (id) => {
+    dispatch(completeTask(id));
   };
 
-  const updateTask =(id,taskName)=>{
-    setEditTaskId(id)
-    setNewTask(taskName)
+  const handleDeleteTask = (id) => {
+    dispatch(deleteTask(id));
+  };
 
-  }
+  const handleUpdateTask = (id, name) => {
+    setEditTaskId(id);
+    setNewTask(name);
+  };
 
- 
   return (
     <div className="App">
-    <h1 className="heading">My To Do List </h1>
+      <h1 className="heading">My To Do List</h1>
       <div className="addTask">
-        <input  className="task-input" id="#task" value={newTask} onChange={handleInputChange} />
-        <button className="addButton" onClick={addTask}>{editTaskId ?"Save" : "Add"}</button>
+        <input
+          className="task-input"
+          id="task"
+          value={newTask}
+          onChange={handleInputChange}
+        />
+        <button className="addButton" onClick={handleAddTask}>
+          {editTaskId ? "Save" : "Add"}
+        </button>
       </div>
       <div className="list">
-        {toDoList.map((task) => {
+        {taskList.map((task) => {
           return (
             <Task
               key={task.id}
-              taskName={task.taskName}
+              taskName={task.name}
               id={task.id}
               completed={task.completed}
-              completeTask={completeTask}
-              deleteTask={deleteTask}
-              editTask={updateTask}
-              
+              completeTask={handleCompleteTask}
+              deleteTask={handleDeleteTask}
+              editTask={handleUpdateTask}
             />
           );
         })}
